@@ -11,13 +11,13 @@ As an example, consider the "Networking" stack, which lives at terraform/stacks/
 
 Before you attempt to create infrastructure using the Terraform code in this repo, you will need to configure the following on your local machine:
 
-1 A version of Terraform
+**1. A version of Terraform**
 
 Terraform is an open source product which evolves very quickly. I'm currently running Terraform version 0.7.13. All release versions can be found here: https://releases.hashicorp.com/terraform/
 
 Once you download the correct terraform file for your OS, make sure that it is contained in your PATH. As usual, the easy way to check that terraform is configured correctly is to enter "terraform -version" in your shell/command prompt which should return information about the downloaded version.
 
-2 Install and configure AWS Command Line Interface (CLI)
+**2. Install and configure AWS Command Line Interface (CLI)**
 
 Follow the steps outlined in this document to install the AWS CLI: http://docs.aws.amazon.com/cli/latest/userguide/installing.html
 
@@ -36,24 +36,18 @@ Once you are happy that you have both Terraform installed and the AWS CLI config
 
 3. deploy.sh takes 4 arguments: -g, -t, -s, -a
    
-   -g = geo (Example: uk or us)
+   **-g** = geo (Example: uk or us)
 
-   -t = target (Example: dev/stg)
+   **-t** = target (Example: dev/stg)
 
-   -s = stack (Example: networking)
+   **-s** = stack (Example: networking)
 
-   -a = action (Example: plan or apply)
+   **-a** = action (Example: plan or apply)
 
 
 4. As an example, to see a plan of the dev Networking stack in the us, our command would be:
 
-   demo/terraform/deploy.sh -g us -t dev -s networking -a plan
-
-
-
-
-
-
-
-
-
+   ```sh
+   $ demo/terraform/deploy.sh -g us -t dev -s networking -a plan
+   ```
+   

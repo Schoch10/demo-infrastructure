@@ -1,4 +1,4 @@
-## Foodtruck Demo Infrastructure
+# Foodtruck Demo Infrastructure
 
 Repo houses terraform code used to build the infrastructure which runs the Foodtruck demo application. The Terraform documentation is pretty easy to follow: https://www.terraform.io/docs/index.html
 
@@ -7,17 +7,17 @@ We use the concept of stacks and modules to help us build our infrastructure in 
 As an example, consider the "Networking" stack, which lives at terraform/stacks/networking. The "Networking" stack is comprised of 4 modules: VPC, Public Subnet, Private Subnet and Bastion.
 
 
-## Setup:
+### Setup:
 
 Before you attempt to create infrastructure using the Terraform code in this repo, you will need to configure the following on your local machine:
 
-1. A version of Terraform
+1 A version of Terraform
 
 Terraform is an open source product which evolves very quickly. I'm currently running Terraform version 0.7.13. All release versions can be found here: https://releases.hashicorp.com/terraform/
 
 Once you download the correct terraform file for your OS, make sure that it is contained in your PATH. As usual, the easy way to check that terraform is configured correctly is to enter "terraform -version" in your shell/command prompt which should return information about the downloaded version.
 
-2. Install and configure AWS Command Line Interface (CLI)
+2 Install and configure AWS Command Line Interface (CLI)
 
 Follow the steps outlined in this document to install the AWS CLI: http://docs.aws.amazon.com/cli/latest/userguide/installing.html
 
@@ -26,7 +26,7 @@ Next, you need to generate an Access Key/Secret Access Key combination. Follow t
 Finally, configure the AWS CLI to use the credentials above by following this document: http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html
 
 
-## Example Usage
+### Example Usage
 
 Once you are happy that you have both Terraform installed and the AWS CLI configured correctly, you can build infrastructure from this repo:
 
@@ -36,7 +36,7 @@ Once you are happy that you have both Terraform installed and the AWS CLI config
 
 3. deploy.sh takes 4 arguments: -g, -t, -s, -a
    
-   -g = geo (For example: uk or us)
+   -g = geo (Example: uk or us)
 
    -t = target (Example: dev/stg)
 

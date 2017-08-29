@@ -1,0 +1,121 @@
+#!/bin/bash
+SOURCE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+set -e
+
+source $SOURCE_DIR/helpers/deploy_helpers.sh
+
+region="$REGION"
+target="$TARGET"
+stack="$STACK"
+
+while getopts ':r:t:s:' opt; do
+  case $opt in
+    r)
+      region="$OPTARG"
+      ;;
+    t)
+      target="$OPTARG"
+      ;;
+    s)
+      stack="$OPTARG"
+      ;;
+  esac
+done
+
+#Progress array
+shift $(expr $OPTIND - 1 )
+deploy_helpers::checkVars
+
+echo "Remaining args: $@"
+
+if [ $# -lt 1 ]; then
+  echo 'ERROR: Need to define a terraform command to execute!'
+  deploy_helpers::usage
+  exit 1
+fi
+
+# Extract the geo variable from the region
+geo=$(echo $region | cut -d '-' -f 1)
+
+# Get the terraform action and any additional parameters from the remaining arguments
+ACTION=$1
+ADDTL_PARAMS=${*:2}
+
+# Get the bucket to hold state files for this region
+CONFIG_BASE=$SOURCE_DIR/region/$region
+CONFIG_FILE=$CONFIG_BASE/geo_config.sh
+if [ ! -f $CONFIG_FILE ]; then
+    echo "Error: [$CONFIG_FILE] does not exist. You'll need to create a config file so we know where to set up the remote config in S3"
+    exit 1
+fi
+source ${CONFIG_FILE}
+deploy_helpers::checkSourced
+
+# Set up the name of the state file in S3
+ENVIRONMENT="${target}-${stack}"
+
+# Set up our bucket path for the S3 state file
+BUCKET_KEY="state/$ENVIRONMENT.tfstate"
+
+# Check to make sure that the stack actually exists
+if [[ ! -d $SOURCE_DIR/stacks/$stack ]]; then
+  echo "ERROR: The stack [$stack] does not exist at $SOURCE_DIR/stacks"
+  echo "Try one of the following: "
+  for i in $(find $SOURCE_DIR/stacks/ -type d -mindepth 1 -maxdepth 1); do
+    echo "  - $(basename $i)"
+  done
+  exit 1
+fi
+
+# Set up and run Terraform from a temporary directory
+TMP_DIR=$SOURCE_DIR/../tmp/$geo-$target-$stack-$(date "+%Y-%m-%d-%H%M%S")
+mkdir -p $TMP_DIR
+cp -r $SOURCE_DIR/* $TMP_DIR
+
+echo "Executing Terraform commands in TMP dir: [$TMP_DIR]"
+
+cd $TMP_DIR/stacks/$stack
+terraform -version
+
+echo "Initializing Terraform backend for [s3://$bucket/$BUCKET_KEY] in [$region]"
+echo "Executing command: terraform init -backend-config \"bucket=$bucket\" -backend-config \"key=$BUCKET_KEY\" -backend-config \"region=$region\""
+terraform init \
+ -backend-config "bucket=$bucket" \
+ -backend-config "key=$BUCKET_KEY" \
+ -backend-config "region=$region"
+
+# I know this is hacky, but instead of refactoring the whole method, KISS
+# This section picks up variable files in a specific order and stores them in the VARS_FILE_FLAG variable
+VAR_DIR=$TMP_DIR/vars
+VARS_FILE_FLAG=""
+
+set +e
+
+if [ $? -eq 0 ]; then
+  for this_var_file in "default" "$stack" "$target" "$geo" "$region/default" "$geo/$stack" "$region/$stack" "$region/$target/default" "$region/$target/$stack"; do
+    [[ -f "$VAR_DIR/$this_var_file.tfvars" ]] && echo "Found: [$this_var_file.tfvars]" && VARS_FILE_FLAG="$VARS_FILE_FLAG -var-file $VAR_DIR/$this_var_file.tfvars"
+  done
+
+  #Generate an input variable file
+  cat > $TMP_DIR/vars/inputVars.tfvars << EOF
+region = "$region"
+target = "$target"
+stack = "$stack"
+geo = "$geo"
+EOF
+
+  echo
+  cat $TMP_DIR/vars/inputVars.tfvars
+  echo
+
+  VARS_FILE_FLAG="-var-file $TMP_DIR/vars/inputVars.tfvars $VARS_FILE_FLAG"
+  echo $VARS_FILE_FLAG
+fi
+set -e
+
+# Executing terraform!
+cd $TMP_DIR/stacks/$stack
+echo "Executing: [terraform $ACTION $VARS_FILE_FLAG $ADDTL_PARAMS]"
+terraform get
+TF_LOG=debug TF_LOG_PATH=$(pwd)/tf_debug.log terraform $ACTION $VARS_FILE_FLAG $ADDTL_PARAMS

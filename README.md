@@ -1,6 +1,6 @@
 # Slalom Demo Infrastructure
 
-Repo houses terraform code used to build the infrastructure which runs the Foodtruck demo application. The Terraform documentation is pretty easy to follow: https://www.terraform.io/docs/index.html
+This repository houses terraform code used to build the infrastructure which runs the Slalom demo application. The Terraform documentation is pretty easy to follow: https://www.terraform.io/docs/index.html
 
 We use the concept of stacks and modules to help us build our infrastructure in a modular manner. Stacks can be thought of as logical building blocks. A single stack can be made up of a number of modules. Modules are a standard Terraform feature, outlined here: https://www.terraform.io/docs/modules/index.html
 
